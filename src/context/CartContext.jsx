@@ -25,16 +25,63 @@ export function CartProvider({ children }) {
         );
       } else return [...prev, { ...item, qty: 1 }];
     });
+    
+    // Trigger cart update event for other components
+    const event = new CustomEvent('cartUpdated');
+    window.dispatchEvent(event);
   };
 
   const removeFromCart = (productId) => {
     setCart((prev) => prev.filter((i) => i.product !== productId));
+    
+    // Trigger cart update event for other components
+    const event = new CustomEvent('cartUpdated');
+    window.dispatchEvent(event);
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    
+    // Trigger cart update event for other components
+    const event = new CustomEvent('cartUpdated');
+    window.dispatchEvent(event);
+  };
+
+  const updateQuantity = (productId, quantity) => {
+    if (quantity < 1) {
+      removeFromCart(productId);
+      return;
+    }
+    
+    setCart((prev) =>
+      prev.map((i) =>
+        i.product === productId ? { ...i, qty: quantity } : i
+      )
+    );
+    
+    // Trigger cart update event for other components
+    const event = new CustomEvent('cartUpdated');
+    window.dispatchEvent(event);
+  };
+
+  const getCartTotal = () => {
+    return cart.reduce((total, item) => total + item.price * item.qty, 0);
+  };
+
+  const getCartItemCount = () => {
+    return cart.reduce((total, item) => total + item.qty, 0);
+  };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ 
+      cart, 
+      addToCart, 
+      removeFromCart, 
+      clearCart, 
+      updateQuantity,
+      getCartTotal,
+      getCartItemCount
+    }}>
       {children}
     </CartContext.Provider>
   );
